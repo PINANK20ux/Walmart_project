@@ -1,64 +1,71 @@
-# Walmart Lakehouse Data Platform 🛒⚡
+# Walmart Lakehouse Data Platform 🛒📊
 
 [![dbt](https://img.shields.io/badge/dbt-Core%20v1.8+-FF694B?style=for-the-badge&logo=dbt&logoColor=white)](https://www.getdbt.com/)
 [![Databricks](https://img.shields.io/badge/Databricks-Delta%20Lake-FF3621?style=for-the-badge&logo=databricks&logoColor=white)](https://databricks.com/)
-[![Architecture](https://img.shields.io/badge/Architecture-Medallion%20(Bronze%20%7C%20Silver%20%7C%20Gold)-0071DC?style=for-the-badge)](https://www.databricks.com/glossary/medallion-architecture)
-[![Security](https://img.shields.io/badge/Security-Zero--Credential%20Enforced-34D399?style=for-the-badge)](file:///.gitignore)
+[![Architecture](https://img.shields.io/badge/Architecture-Medallion%20Lakehouse-0071DC?style=for-the-badge)](https://www.databricks.com/glossary/medallion-architecture)
+[![Modeling](https://img.shields.io/badge/Modeling-Kimball%20%2B%20OBT%20%2B%20SCD2-059669?style=for-the-badge)](#-detailed-layer-breakdown--engineering-decisions)
+[![Security](https://img.shields.io/badge/Security-Zero--Credential%20Enforced-34D399?style=for-the-badge)](#-security--credential-management)
 
-An enterprise-grade **Medallion Lakehouse** data transformation platform engineered with **dbt** and **Databricks Delta Lake**. The platform ingests omnichannel retail data (customers, orders, order items, products, stores, and employees) through incremental watermarking, compiles a dynamic Jinja-driven **One Big Table (OBT)**, and delivers dimensional models with **Slowly Changing Dimensions (SCD Type 2)** alongside transactional fact tables.
-
----
-
-## 🌟 Interactive Documentation & Architecture Viewer
-
-This repository features an interactive web documentation dashboard: **[`interactive_readme.html`](file:///c:/Users/krish/Documents/Code/Walmart_database/interactive_readme.html)**.
-
-Open **[`interactive_readme.html`](file:///c:/Users/krish/Documents/Code/Walmart_database/interactive_readme.html)** in any modern web browser to experience:
-- **Medallion Explorer:** Interactive pipeline graph with detailed node inspections and lineage metadata.
-- **Jinja OBT Compiler:** Side-by-side view comparing dynamic Jinja source macros against compiled Databricks SQL.
-- **SCD Type 2 Simulator:** Interactive timeline engine demonstrating point-in-time record expiration and `9999-12-31` validity.
-- **Data Dictionary:** Searchable index of all tables, columns, and data types across all layers.
-- **dbt CLI Generator:** Interactive command builder tailored to your environment and model selectors.
+An enterprise-grade **Medallion Lakehouse** data platform built with **dbt** and **Databricks Delta Lake**. This project transforms raw point-of-sale (POS) and retail enterprise data into high-performance, analytics-ready analytical marts and slowly changing dimensions (SCD Type 2).
 
 ---
 
-## 🏛️ Medallion Architecture
+## 📌 Executive Summary & Business Context
+
+In large-scale omnichannel retail, transactions occur across thousands of stores and digital channels simultaneously. To deliver accurate operational reporting, inventory intelligence, and customer insights, data engineering teams face three primary challenges:
+
+1. **Transaction Granularity vs. Analytical Performance**: Point-of-sale databases store orders and items across separate normalized relational tables. Querying raw normalized schemas directly in business intelligence (BI) tools causes massive join overhead, slow dashboard load times, and high cloud compute bills.
+2. **Historical State Drift (The SCD Problem)**: Over time, customer addresses change, employees are promoted or reassigned, store attributes update, and product prices fluctuate. If updates simply overwrite existing rows (SCD Type 1), historical revenue analysis and point-in-time order attribution become distorted (e.g., reporting a sale made in 2023 with a 2025 price or a customer's new address).
+3. **Data Freshness vs. Compute Cost**: Scanning hundreds of gigabytes of historical data on every run is unsustainable. The pipeline must ingest new and updated records incrementally using high-watermark tracking while maintaining deduplication and referential integrity.
+
+### What This Platform Delivers
+- **Incremental Technical Ingestion**: Watermark-driven incremental tables in `silver_tech` that process only newly created or modified records.
+- **Unified Analytical Substrate (One Big Table - OBT)**: A consolidated, denormalized wide table combining 6 retail entity domains into a single source of truth, eliminating repetitive multi-table joins for downstream analysts.
+- **Dynamic Jinja Metaprogramming**: A declarative configuration pattern that dynamically builds wide joins and schema projections, replacing fragile, error-prone manual SQL.
+- **Audit-Proof Historical Tracking (SCD Type 2)**: Automated snapshot models in `gold` that record attribute histories with precise validity windows (`dbt_valid_from` to `dbt_valid_to`), setting active records to `9999-12-31`.
+- **Granular Fact Tables**: Transactional order-item grain marts powering KPIs like Average Order Value (AOV), basket size, store efficiency, and category margins.
+
+---
+
+## 🏛️ Lakehouse Architecture & Data Flow
+
+The platform implements the industry-standard **Medallion Lakehouse Architecture**, moving data from raw capture to business-ready dimensional structures:
 
 ```mermaid
 flowchart TD
-    subgraph Sources ["Raw Data Sources"]
-        SRC_C["customers.csv"]
-        SRC_S["stores.csv"]
-        SRC_P["products.csv"]
-        SRC_E["employees.csv"]
-        SRC_O["orders.csv"]
-        SRC_OI["order_items.csv"]
+    subgraph Sources ["Source Layer (Transactional Systems / POS)"]
+        SRC_C["Customer Profiles<br/>(Demographics, Contact)"]
+        SRC_S["Store Master<br/>(Locations, Geography)"]
+        SRC_P["Product Catalog<br/>(SKUs, Brands, Prices)"]
+        SRC_E["Store Associates<br/>(Staffing, Payroll)"]
+        SRC_O["Order Headers<br/>(Status, Payment, Totals)"]
+        SRC_OI["Order Line Items<br/>(Baskets, Quantities)"]
     end
 
-    subgraph Bronze ["1. Bronze Layer (walmart.bronze)"]
-        B_C[("customers")]
-        B_S[("stores")]
-        B_P[("products")]
-        B_E[("employees")]
-        B_O[("orders")]
-        B_OI[("order_items")]
+    subgraph Bronze ["1. Bronze Layer (Raw Ingestion • Delta Lake)"]
+        B_C[("bronze.customers<br/><i>Append-only raw feed</i>")]
+        B_S[("bronze.stores<br/><i>Store registry feed</i>")]
+        B_P[("bronze.products<br/><i>Product catalog feed</i>")]
+        B_E[("bronze.employees<br/><i>Staffing feed</i>")]
+        B_O[("bronze.orders<br/><i>Point-of-sale headers</i>")]
+        B_OI[("bronze.order_items<br/><i>Basket item rows</i>")]
     end
 
-    subgraph SilverTech ["2. Silver Technical Layer (walmart.silver_tech)"]
-        ST_C["customer_tech<br/><i>(incremental merge)</i>"]
-        ST_S["stores_tech<br/><i>(incremental merge)</i>"]
-        ST_P["product_tech<br/><i>(incremental merge)</i>"]
-        ST_E["employee_tech<br/><i>(incremental merge)</i>"]
-        ST_O["orders_tech<br/><i>(incremental merge)</i>"]
-        ST_OI["order_items_tech<br/><i>(incremental merge)</i>"]
+    subgraph SilverTech ["2. Silver Technical Layer (Incremental Cleansing • silver_tech)"]
+        ST_C["customer_tech<br/><i>Watermarked upsert by customer_id</i>"]
+        ST_S["stores_tech<br/><i>Watermarked upsert by store_id</i>"]
+        ST_P["product_tech<br/><i>Watermarked upsert by product_id</i>"]
+        ST_E["employee_tech<br/><i>Watermarked upsert by employee_id</i>"]
+        ST_O["orders_tech<br/><i>Watermarked upsert by order_id</i>"]
+        ST_OI["order_items_tech<br/><i>Watermarked upsert by order_item_id</i>"]
     end
 
-    subgraph SilverBus ["3. Silver Business Layer (walmart.silver_b)"]
-        OBT["<b>obt (One Big Table)</b><br/><i>Dynamic Jinja Left Joins</i>"]
-        TEST_OBT{{"Referential Integrity Test<br/>(test_obt.sql)"}}
+    subgraph SilverBus ["3. Silver Business Layer (Denormalization • silver_b)"]
+        OBT["<b>obt (One Big Table)</b><br/><i>Wide denormalized table joining all 6 entities</i><br/><i>Powered by declarative Jinja metaprogramming</i>"]
+        TEST_OBT{{"Referential Integrity Check<br/>(test_obt.sql)"}}
     end
 
-    subgraph GoldEph ["Gold Ephemeral Staging"]
+    subgraph GoldEph ["Gold Staging (Ephemeral)"]
         GE_C["eph_customers"]
         GE_S["eph_stores"]
         GE_P["eph_products"]
@@ -66,22 +73,16 @@ flowchart TD
         GE_O["eph_orders"]
     end
 
-    subgraph Gold ["4. Gold Serving Layer (walmart.gold)"]
-        FACT["<b>fact_orders</b><br/><i>Order Items Grain Fact</i>"]
-        DIM_C[("dim_customer<br/><i>(SCD2 Snapshot)</i>")]
-        DIM_S[("dim_stores<br/><i>(SCD2 Snapshot)</i>")]
-        DIM_P[("dim_products<br/><i>(SCD2 Snapshot)</i>")]
-        DIM_E[("dim_employee<br/><i>(SCD2 Snapshot)</i>")]
-        DIM_O[("dim_orders<br/><i>(SCD2 Snapshot)</i>")]
+    subgraph Gold ["4. Gold Serving Layer (Dimensional Marts & Snapshots • gold)"]
+        FACT["<b>fact_orders</b><br/><i>Transactional fact at item grain</i><br/><i>Revenue, quantity, pricing metrics</i>"]
+        DIM_C[("dim_customer<br/><i>SCD Type 2 Snapshot</i>")]
+        DIM_S[("dim_stores<br/><i>SCD Type 2 Snapshot</i>")]
+        DIM_P[("dim_products<br/><i>SCD Type 2 Snapshot</i>")]
+        DIM_E[("dim_employee<br/><i>SCD Type 2 Snapshot</i>")]
+        DIM_O[("dim_orders<br/><i>SCD Type 2 Snapshot</i>")]
     end
 
-    SRC_C --> B_C
-    SRC_S --> B_S
-    SRC_P --> B_P
-    SRC_E --> B_E
-    SRC_O --> B_O
-    SRC_OI --> B_OI
-
+    Sources --> Bronze
     B_C --> ST_C
     B_S --> ST_S
     B_P --> ST_P
@@ -114,86 +115,129 @@ flowchart TD
 
 ---
 
-## 📐 Data Pipeline Layers
+## 🔍 Detailed Layer Breakdown & Engineering Decisions
 
 ### 1. Bronze Layer (`walmart.bronze`)
-- **Type**: Delta Lake External Tables.
-- **Source Definition**: Configured in [`walmart_db/models/source/source.yml`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/models/source/source.yml).
-- **Entities**:
-  - `customers`: Customer identifiers, demographic coordinates, contact info, active flag.
-  - `stores`: Store branches, locations, cities, provinces.
-  - `products`: SKU identifiers, descriptions, categories, brands, base unit price.
-  - `employees`: Store associates, job titles, base salaries.
-  - `orders`: Transaction headers, timestamps, payment methods, order statuses, order totals.
-  - `order_items`: Line-item transactions, quantities, unit prices, line amounts.
+- **Role**: Raw landing zone for raw operational tables ingested from source relational stores into Databricks Delta Lake.
+- **Design Philosophy**: Unaltered schema fidelity. Data is captured with historical integrity to allow complete pipeline replays and audits.
+- **Catalog Declaration**: Managed via [`source.yml`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/models/source/source.yml).
+
+| Source Table | Entity Domain | Primary Key | Business Role |
+| :--- | :--- | :--- | :--- |
+| `customers` | Customer Management | `customer_id` | Master identity, email, phone, city, province, and active status |
+| `stores` | Retail Real Estate | `store_id` | Brick-and-mortar physical locations, municipal jurisdictions |
+| `products` | Merchandising & Inventory | `product_id` | Catalog SKU details, category hierarchy, brand, and retail price |
+| `employees` | Workforce Operations | `employee_id` | Store associate registry, job title, and base compensation |
+| `orders` | Sales & Transactions | `order_id` | Checkout events, timestamp, payment method, order status, total cost |
+| `order_items` | Basket Analytics | `order_item_id` | Individual product items purchased per order, quantity, unit price |
+
+---
 
 ### 2. Silver Technical Layer (`walmart.silver_tech`)
-- **Materialization**: `incremental` table (via Databricks Delta MERGE).
-- **Core Pattern**: High-watermark incremental ingestion with deduplication and metadata stamping:
-  ```sql
-  {{
-      config(
-          materialized='incremental',
-          unique_key = 'customer_id'
-      )
-  }}
+- **Role**: Technical standardization, deduplication, incremental upserting, and audit logging.
+- **Engineering Highlights**:
+  - **Delta MERGE Incremental Materialization**: Uses dbt's `incremental` materialization with a defined `unique_key`. When new records arrive, modified rows are merged and new rows are inserted without scanning unchanged data.
+  - **High-Watermark Filtering**: Compares incoming `updated_timestamp` against the current maximum `updated_timestamp` in the target table:
+    ```sql
+    {% if is_incremental() %}
+        WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})
+    {% endif %}
+    ```
+  - **Technical Lineage**: Appends `current_timestamp() AS processed_at` to provide visibility into when each row entered the lakehouse.
+  - **Automated Data Quality Testing**:
+    - `orders_tech`: Primary key uniqueness and non-null assertions.
+    - `product_tech`: Uniqueness validation on active products with price sanity assertions (`where: "price > 0"`).
 
-  SELECT 
-      *,
-      current_timestamp() AS processed_at
-  FROM 
-      {{ source('walmart_db', 'customers') }}
+---
 
-  {% if is_incremental() %}
-      WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})
-  {% endif %}
-  ```
-- **Custom Schema Routing**: Uses [`walmart_db/macros/custom_schema.sql`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/macros/custom_schema.sql) (`generate_schema_name`) to cleanly separate schemas into `silver_tech`, `silver_b`, and `gold`.
+### 3. Silver Business Layer: One Big Table (`walmart.silver_b`)
+- **Role**: Denormalized analytics foundation that unifies all 6 entity domains.
+- **Model**: [`models/silver_b/obt.sql`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/models/silver_b/obt.sql)
 
-### 3. Silver Business Layer (`walmart.silver_b`)
-- **Materialization**: `table`.
-- **Model**: [`walmart_db/models/silver_b/obt.sql`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/models/silver_b/obt.sql).
-- **Jinja Meta-Programming**: Constructs a wide, denormalized table by looping through an extensible configuration structure. Avoids repetitive SQL boilerplates and automatically maps column projections and multi-table join conditions:
-  ```jinja
-  {% set configs = [
-      { "table": ref('orders_tech'), "alias": "o", "columns": """ ... """ },
-      { "table": ref('customer_tech'), "alias": "c", "join_condition": "o.customer_id = c.customer_id", "columns": """ ... """ },
-      { "table": ref('order_items_tech'), "alias": "oi", "join_condition": "o.order_id = oi.order_id", "columns": """ ... """ },
-      { "table": ref('product_tech'), "alias": "p", "join_condition": "oi.product_id = p.product_id", "columns": """ ... """ },
-      { "table": ref('employee_tech'), "alias": "e", "join_condition": "o.store_id = e.store_id", "columns": """ ... """ },
-      { "table": ref('stores_tech'), "alias": "s", "join_condition": "o.store_id = s.store_id", "columns": """ ... """ }
-  ] %}
-  ```
-- **Data Integrity Testing**: Enforces non-null foreign keys and business constraints via [`walmart_db/tests/test_obt.sql`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/tests/test_obt.sql).
+#### Why One Big Table (OBT)?
+In analytical reporting and ad-hoc SQL querying, performing 6-way `JOIN` operations repeatedly leads to:
+1. **High Query Latency**: End-user dashboards in Power BI or Tableau re-execute expensive shuffle operations on every filter change.
+2. **Semantic Divergence**: Different analysts write joins with slight variations (e.g., inner join vs. left join, missing conditions), yielding conflicting numbers for revenue or order counts.
+3. **Resource Waste**: Cloud warehouse compute credits are wasted recalculating identical join paths.
+
+By pre-computing the **One Big Table**, queries on orders, items, products, customers, employees, and stores hit a single pre-joined table.
+
+#### Dynamic Jinja Meta-Programming
+Instead of hardcoding 140 lines of static SQL `LEFT JOIN` statements, `obt.sql` uses a declarative configuration array:
+- Each joined entity is specified as a dictionary containing its reference, alias, join key, and selected columns.
+- Jinja iteratively unpacks the column list and builds the `LEFT JOIN` clauses automatically.
+- Adding a new attribute or table in the future requires editing only the config block, preventing regression bugs.
+
+#### Data Integrity Gate
+To ensure the denormalization never produces orphan rows or join fan-out, the custom test [`test_obt.sql`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/tests/test_obt.sql) asserts referential integrity across all foreign keys:
+```sql
+SELECT 1 FROM {{ ref('obt') }} AS obt_b
+WHERE obt_b.order_id IS NULL
+   OR obt_b.product_id IS NULL
+   OR obt_b.store_id IS NULL
+   OR obt_b.employee_id IS NULL
+   OR obt_b.customer_id IS NULL
+   OR obt_b.order_item_id IS NULL;
+```
+
+---
 
 ### 4. Gold Serving Layer (`walmart.gold`)
-- **Dimensional Modeling**:
-  - **Fact Table**: [`walmart_db/models/gold/fact/fact_orders.sql`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/models/gold/fact/fact_orders.sql) captures granular transaction measurements (`total_amount`, `quantity`, `unit_price`, `line_amount`) linked to dimension surrogate keys.
-  - **Ephemeral Staging**: Staging queries in [`walmart_db/models/gold/ephemeral/`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/models/gold/ephemeral/) compute distinct entity states without unnecessary storage footprint.
-  - **SCD Type 2 Snapshots**: Historical tracking configured in [`walmart_db/snapshots/`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/snapshots/):
-    - `dim_customer`: Customer profile movements (e.g. address or contact change).
-    - `dim_products`: Price modifications and categorization changes.
-    - `dim_stores`: Store relocations and operating status shifts.
-    - `dim_employee`: Role promotions and compensation updates.
-    - `dim_orders`: Order lifecycle progression across delivery milestones.
-    - **Current Record Standard**: Uses `dbt_valid_to_current: "to_date('9999-12-31')"` to support standard dimensional BI joins:
-      ```sql
-      -- Point-in-time historical join query
-      SELECT 
-          f.order_id,
-          f.line_amount,
-          c.customer_city,
-          p.product_name
-      FROM walmart.gold.fact_orders f
-      JOIN walmart.gold.dim_customer c
-        ON f.customer_id = c.customer_id
-       AND f.order_timestamp >= c.dbt_valid_from
-       AND f.order_timestamp < c.dbt_valid_to
-      JOIN walmart.gold.dim_products p
-        ON f.product_id = p.product_id
-       AND f.order_timestamp >= p.dbt_valid_from
-       AND f.order_timestamp < p.dbt_valid_to;
-      ```
+- **Role**: Kimball-style star schema models optimized for business intelligence, executive metrics, and audit history.
+
+#### Transactional Fact: `fact_orders`
+- **Granularity**: One row per item inside a customer order (`order_item_id`).
+- **Measures**: `quantity`, `unit_price`, `line_amount`, `total_amount`.
+- **Dimensions**: Foreign keys linking to `order_id`, `product_id`, `store_id`, `employee_id`, and `customer_id`.
+
+#### Slowly Changing Dimensions (SCD Type 2) Snapshots
+Retail attributes are fluid:
+- A customer moves from Toronto to Vancouver.
+- An employee is promoted from Cashier to Department Lead.
+- A product's retail price is marked down from $49.99 to $39.99.
+
+If these updates overwrite past values, historical reporting breaks. For example, calculating last month's profit margin using today's discounted price produces false margins.
+
+The platform uses dbt snapshots configured in [`snapshots/*.yml`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/snapshots/) to preserve full historical lineage:
+- **Change Detection**: Strategy `timestamp` tracks mutations via each entity's `updated_timestamp`.
+- **Current Record Identification**: Configured with `dbt_valid_to_current: "to_date('9999-12-31')"`. This standard allows analysts to filter for current rows with simple boolean logic (`WHERE dbt_valid_to = '9999-12-31'`) or perform point-in-time historical joins.
+
+```sql
+-- Point-in-time join example: attributing revenue to customer's city at order time
+SELECT 
+    f.order_id,
+    f.line_amount,
+    c.customer_city,
+    p.product_name,
+    p.price AS price_at_sale_date
+FROM walmart.gold.fact_orders f
+JOIN walmart.gold.dim_customer c
+  ON f.customer_id = c.customer_id
+ AND f.order_timestamp >= c.dbt_valid_from
+ AND f.order_timestamp < c.dbt_valid_to
+JOIN walmart.gold.dim_products p
+  ON f.product_id = p.product_id
+ AND f.order_timestamp >= p.dbt_valid_from
+ AND f.order_timestamp < p.dbt_valid_to;
+```
+
+---
+
+## 📊 Business Metrics & Analytical Use Cases
+
+With this platform deployed, analytics and BI teams can answer high-impact commercial questions:
+
+1. **Basket Analysis & Product Affinity**:
+   - What are the top product pairings purchased together?
+   - What is the average basket size across physical store categories?
+2. **Omnichannel Store Performance**:
+   - Which retail locations achieve the highest sales revenue per square foot?
+   - How does associate staffing correlate with store sales throughput?
+3. **Customer Cohort Retention & Churn**:
+   - How does customer relocation between provinces impact recurring order frequency?
+   - What is the Customer Lifetime Value (CLV) grouped by acquisition cohort?
+4. **Margin & Pricing Audit**:
+   - Track product price velocity and examine how historical discounts influenced overall order volumes.
 
 ---
 
@@ -202,48 +246,47 @@ flowchart TD
 ```text
 Walmart_database/
 ├── .gitignore                   # Multi-tier security & build ignore rules
-├── interactive_readme.html      # Interactive documentation & visual architecture dashboard
-├── README.md                    # Root enterprise technical documentation
+├── README.md                    # Platform engineering documentation
 ├── Walmart_dataset/             # Raw source assets & DDL definitions
-│   ├── .env.example             # Template for database & API credentials
+│   ├── .env.example             # Clean environment template (URI & API keys)
 │   ├── data/                    # Source CSV data extracts
-│   │   ├── customers.csv
-│   │   ├── employees.csv
-│   │   ├── order_items.csv
-│   │   ├── orders.csv
-│   │   ├── products.csv
-│   │   └── stores.csv
+│   │   ├── customers.csv        # Customer profiles
+│   │   ├── employees.csv        # Associate records
+│   │   ├── order_items.csv      # Order line items
+│   │   ├── orders.csv           # Transaction headers
+│   │   ├── products.csv         # Product catalog
+│   │   └── stores.csv           # Store directory
 │   └── ddl/
-│       └── walmart_schema.sql   # Relational DDL definitions
+│       └── walmart_schema.sql   # Relational schema DDL
 └── walmart_db/                  # Core dbt transformation project
-    ├── .gitignore               # dbt-scoped ignore rules
-    ├── dbt_project.yml          # Project configuration & schema mappings
+    ├── .gitignore               # dbt package ignore rules
+    ├── dbt_project.yml          # Project configuration & schema settings
     ├── profiles.sample.yml      # Zero-credential Databricks connection template
-    ├── README.md                # dbt project technical quickstart
+    ├── README.md                # dbt operations reference
     ├── macros/
-    │   └── custom_schema.sql    # Custom schema naming override macro
+    │   └── custom_schema.sql    # Custom schema router macro
     ├── models/
     │   ├── source/
     │   │   └── source.yml       # Bronze source declarations
-    │   ├── silver_tech/         # Incremental technical models with watermarks
+    │   ├── silver_tech/         # Incremental watermarked technical models
     │   │   ├── customer_tech.sql
     │   │   ├── employee_tech.sql
     │   │   ├── order_items_tech.sql
     │   │   ├── orders_tech.sql
     │   │   ├── product_tech.sql
     │   │   ├── stores_tech.sql
-    │   │   └── propeties.yml    # Silver layer schema validations & tests
+    │   │   └── propeties.yml    # Data tests & constraints
     │   ├── silver_b/
     │   │   └── obt.sql          # Dynamic Jinja One Big Table (OBT)
     │   └── gold/
-    │       ├── ephemeral/       # Ephemeral intermediate models for snapshots
+    │       ├── ephemeral/       # Ephemeral staging queries for snapshots
     │       │   ├── eph_customers.sql
     │       │   ├── eph_employee.sql
     │       │   ├── eph_orders.sql
     │       │   ├── eph_products.sql
     │       │   └── eph_stores.sql
     │       └── fact/
-    │           └── fact_orders.sql # Core transactional order items fact
+    │           └── fact_orders.sql # Core transactional fact table
     ├── snapshots/               # SCD Type 2 YAML snapshot definitions
     │   ├── dim_customer.yml
     │   ├── dim_employee.yml
@@ -251,31 +294,31 @@ Walmart_database/
     │   ├── dim_products.yml
     │   └── dim_stores.yml
     └── tests/
-        └── test_obt.sql         # Referential integrity test for OBT joins
+        └── test_obt.sql         # Referential integrity test
 ```
 
 ---
 
-## 🔒 Security & Credential Protection
+## 🔒 Security & Credential Management
 
-This repository strictly enforces a **Zero-Credential Policy**:
-1. **Never commit `profiles.yml` or `.env` files**: All sensitive personal access tokens (PATs), database URLs, and API keys are blocked by [`.gitignore`](file:///.gitignore).
-2. **Environment Variable Injection**: In production or CI/CD, use environment variables to supply credentials dynamically:
-   - `DBT_DATABRICKS_HOST`
-   - `DBT_DATABRICKS_HTTP_PATH`
-   - `DBT_DATABRICKS_TOKEN`
-3. **Template References**:
-   - Refer to [`walmart_db/profiles.sample.yml`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/profiles.sample.yml) for configuring dbt connections.
-   - Refer to [`Walmart_dataset/.env.example`](file:///c:/Users/krish/Documents/Code/Walmart_database/Walmart_dataset/.env.example) for dataset connection strings.
+This project strictly enforces a **Zero-Credential Policy**:
+- **Ignored Files**: All files containing sensitive Databricks tokens (`profiles.yml`), database connection URIs (`.env`), dbt runtime state (`.user.yml`), and logs (`logs/`, `*.log`) are ignored by Git.
+- **Environment Variable Injection**: In automated CI/CD pipelines (GitHub Actions, GitLab CI) and local development, credentials should be injected via environment variables:
+  ```bash
+  export DBT_DATABRICKS_HOST="dbc-xxxx.cloud.databricks.com"
+  export DBT_DATABRICKS_HTTP_PATH="/sql/1.0/warehouses/xxxx"
+  export DBT_DATABRICKS_TOKEN="dapi_your_access_token_here"
+  ```
+- **Templates**: Always configure local instances using [`walmart_db/profiles.sample.yml`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/profiles.sample.yml) and [`Walmart_dataset/.env.example`](file:///c:/Users/krish/Documents/Code/Walmart_database/Walmart_dataset/.env.example).
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Operations & Execution Guide
 
 ### 1. Prerequisites
-- **Python**: Version 3.10+
-- **dbt-databricks**: Version 1.8+
-- Access to a **Databricks SQL Warehouse** or **Databricks Cluster** with Unity Catalog / Delta Lake.
+- Python 3.10+
+- dbt-databricks adapter 1.8+
+- Active Databricks SQL Warehouse or Unity Catalog compute cluster
 
 ### 2. Environment Setup
 ```bash
@@ -283,82 +326,61 @@ This repository strictly enforces a **Zero-Credential Policy**:
 git clone <repository_url>
 cd Walmart_database
 
-# Create and activate Python virtual environment
+# Create and activate virtual environment
 python -m venv .venv
-
-# Windows
+# On Windows:
 .venv\Scripts\activate
-
-# Linux / macOS
+# On Linux / macOS:
 source .venv/bin/activate
 
-# Install dbt Databricks adapter
+# Install dbt-databricks
 pip install dbt-databricks
 ```
 
-### 3. Configure Connection Profile
-Copy the sample profile to your active configuration:
+### 3. Connection Configuration
 ```bash
-# Option A: In the dbt project folder
+# Copy sample profile
 cp walmart_db/profiles.sample.yml walmart_db/profiles.yml
 
-# Option B: In user home directory (~/.dbt/profiles.yml)
-cp walmart_db/profiles.sample.yml ~/.dbt/profiles.yml
-```
-Export your credentials:
-```bash
-export DBT_DATABRICKS_HOST="dbc-xxxx.cloud.databricks.com"
-export DBT_DATABRICKS_HTTP_PATH="/sql/1.0/warehouses/xxxx"
-export DBT_DATABRICKS_TOKEN="dapi_your_actual_token_here"
-```
-
-### 4. Verify Connection
-```bash
+# Navigate into dbt project
 cd walmart_db
+
+# Validate connection to Databricks
 dbt debug
 ```
 
----
-
-## ⚡ Running the Pipeline
-
-Execute transformations sequentially or use targeted dbt selectors:
+### 4. Running the Pipeline
 
 ```bash
-# 1. Run all transformations across the entire project
-dbt run
-
-# 2. Run only the incremental technical layer (Silver Tech)
+# Step 1: Ingest and merge the incremental technical layer (Silver Tech)
 dbt run --select silver_tech
 
-# 3. Perform a full refresh rebuild on incremental models
-dbt run --select silver_tech --full-refresh
-
-# 4. Run the One Big Table (OBT) and all downstream models
+# Step 2: Build the One Big Table (OBT) and downstream gold models
 dbt run --select obt+
 
-# 5. Run only the Gold transactional fact table
-dbt run --select fact_orders
-
-# 6. Execute SCD Type 2 dimension snapshots
+# Step 3: Execute SCD Type 2 snapshots to capture historical changes
 dbt snapshot
 
-# 7. Execute all data quality tests
+# Step 4: Run all data quality and referential integrity tests
 dbt test
 
-# 8. End-to-end build: models, snapshots, and tests
+# Step 5: Full end-to-end production build (models + snapshots + tests)
 dbt build
+
+# Optional: Perform a full-refresh rebuild of incremental models
+dbt run --select silver_tech --full-refresh
 ```
 
 ---
 
-## 🧪 Data Quality & Governance
+## 🛡️ Data Governance & Quality Standards
 
-- **Uniqueness & Non-Null**: Asserted on primary keys across models (e.g. `product_id` validated with `where: "price > 0"` in [`silver_tech/propeties.yml`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/models/silver_tech/propeties.yml)).
-- **Referential Integrity**: Verified across all 6 joined entities in [`tests/test_obt.sql`](file:///c:/Users/krish/Documents/Code/Walmart_database/walmart_db/tests/test_obt.sql) to prevent orphaned transactions.
-- **Audit Lineage**: Every incremental table captures `processed_at`, and snapshots preserve `dbt_valid_from` and `dbt_valid_to`.
+- **Primary Key Integrity**: Every entity has a unique identifier verified with dbt tests (`unique`, `not_null`).
+- **Domain Constraints**: Business values are guarded with conditional filters (e.g. `where: "price > 0"`).
+- **Referential Integrity**: Multi-table relationships are asserted in `test_obt.sql` before metrics hit the Gold layer.
+- **Audit Lineage**: Every row records its processing timestamp (`processed_at`), and dimensional snapshots preserve historical windows (`dbt_valid_from`, `dbt_valid_to`).
 
 ---
 
-## 📄 License & Maintainers
-Engineered for enterprise analytics and lakehouse data engineering. Maintained by the Walmart Data Engineering Team.
+## 👥 Contributors & Maintainers
+Engineered for enterprise data platform analytics. Maintained by the Walmart Data Engineering Team.

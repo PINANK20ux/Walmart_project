@@ -2,7 +2,7 @@
 
 This folder contains the core **dbt** project for the **Walmart Lakehouse Data Platform**, configured for **Databricks Delta Lake**.
 
-> 📖 **Comprehensive Documentation**: For full architecture diagrams, data dictionaries, security guidelines, and an interactive UI, see the root [README.md](file:///c:/Users/krish/Documents/Code/Walmart_database/README.md) and [interactive_readme.html](file:///c:/Users/krish/Documents/Code/Walmart_database/interactive_readme.html).
+> 📖 **Architecture & Platform Documentation**: For full business context, Medallion layer details, data flow diagrams, and security guidelines, see the root [README.md](file:///c:/Users/krish/Documents/Code/Walmart_database/README.md).
 
 ---
 
