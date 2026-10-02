@@ -1,0 +1,32 @@
+# ==============================================================================
+# dbt Project .gitignore (walmart_db)
+# ==============================================================================
+
+# dbt compilation & packaging artifacts
+target/
+dbt_packages/
+
+# Execution logs
+logs/
+*.log
+
+# Sensitive credentials & environment variables
+profiles.yml
+.env
+.env.*
+*.env
+
+# dbt user tracking
+.user.yml
+
+# Python cache & virtualenvs
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

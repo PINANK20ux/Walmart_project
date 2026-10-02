@@ -1,0 +1,101 @@
+# ==============================================================================
+# Walmart Lakehouse Data Platform - Git Ignore Configuration
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. CRITICAL: Security, Credentials & Environment Secrets
+# ------------------------------------------------------------------------------
+# Databricks & dbt credentials (NEVER commit tokens or credentials)
+profiles.yml
+**/profiles.yml
+walmart_db/profiles.yml
+
+# Environment variable files containing DB passwords & API keys
+.env
+.env.*
+*.env
+Walmart_dataset/.env
+
+# Sensitive certificates, keys, and tokens
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*credentials*.json
+id_rsa
+id_ed25519
+
+# ------------------------------------------------------------------------------
+# 2. dbt Build Artifacts, Packages & Execution Logs
+# ------------------------------------------------------------------------------
+# Compiled models, target directory, catalog, and manifests
+target/
+**/target/
+
+# Downloaded dbt dependencies and packages
+dbt_packages/
+**/dbt_packages/
+
+# Execution logs
+logs/
+**/logs/
+*.log
+dbt.log
+
+# dbt anonymous user tracking config
+.user.yml
+**/.user.yml
+
+# ------------------------------------------------------------------------------
+# 3. Python & Virtual Environments
+# ------------------------------------------------------------------------------
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing & coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ------------------------------------------------------------------------------
+# 4. Operating System & Editor Metadata
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# JetBrains / Eclipse / Others
+.idea/
+*.sublime-workspace
+
+# VS Code workspace state (keep shared workspace settings)
+.vscode/*
+!.vscode/settings.json
+
+# Temporary & scratch files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+scratch/

@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walmart Lakehouse Data Platform - Interactive Architecture & Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1a2234;
+      --card-bg: rgba(22, 30, 48, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(56, 189, 248, 0.4);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --walmart-blue: #0071dc;
+      --walmart-yellow: #ffc220;
+      --accent-cyan: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #f43f5e;
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --shadow-glow: 0 0 25px rgba(0, 113, 220, 0.25);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(0, 0, 0, 0.08);
+      --card-border-hover: rgba(0, 113, 220, 0.4);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --shadow-glow: 0 10px 25px rgba(0, 113, 220, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0, 113, 220, 0.15) 0%, rgba(168, 85, 247, 0.08) 50%, transparent 80%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header & Navigation */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 14, 23, 0.8);
+    }
+
+    [data-theme="light"] header {
+      background: rgba(248, 250, 252, 0.85);
+    }
+
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-spark {
+      color: var(--walmart-yellow);
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .brand-tag {
+      background: linear-gradient(135deg, var(--walmart-blue), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      background: rgba(0, 113, 220, 0.12);
+      border: 1px solid rgba(0, 113, 220, 0.3);
+      color: var(--accent-cyan);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 18px;
+    }
+
+    .hero-gradient-text {
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    [data-theme="light"] .hero-gradient-text {
+      background: linear-gradient(135deg, #0f172a 30%, #334155 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      max-width: 760px;
+      margin: 0 auto 36px;
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      font-weight: 400;
+    }
+
+    /* Stat Cards Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .stat-pill {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(8px);
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .stat-pill:hover {
+      border-color: var(--card-border-hover);
+      transform: translateY(-2px);
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Main Tab Navigation */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--bg-tertiary);
+      padding: 6px;
+      border-radius: var(--radius-md);
+      margin-bottom: 32px;
+      overflow-x: auto;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px 18px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--walmart-blue);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(0, 113, 220, 0.4);
+    }
+
+    /* Tab Content Containers */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Medallion Pipeline Explorer */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    @media (max-width: 1024px) {
+      .pipeline-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pipeline-column {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+
+    .pipeline-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .col-title {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .col-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .badge-bronze { background: rgba(217, 119, 6, 0.2); color: #fbbf24; border: 1px solid rgba(217, 119, 6, 0.4); }
+    .badge-silver-tech { background: rgba(79, 70, 229, 0.2); color: #818cf8; border: 1px solid rgba(79, 70, 229, 0.4); }
+    .badge-silver-bus { background: rgba(8, 145, 178, 0.2); color: #38bdf8; border: 1px solid rgba(8, 145, 178, 0.4); }
+    .badge-gold { background: rgba(5, 150, 105, 0.2); color: #34d399; border: 1px solid rgba(5, 150, 105, 0.4); }
+
+    .node-card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .node-card:hover, .node-card.selected {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .node-card.selected {
+      background: rgba(0, 113, 220, 0.18);
+    }
+
+    .node-title {
+      font-weight: 600;
+      font-size: 0.92rem;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .node-mat {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .node-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Model Inspector Panel */
+    .inspector-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-top: 24px;
+      position: relative;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .inspector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .inspector-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .meta-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+    }
+
+    .code-block {
+      background: #070a11;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #38bdf8;
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+
+    /* Jinja OBT Visualizer */
+    .jinja-split-view {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .jinja-split-view {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .code-editor-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-top-bar {
+      background: var(--bg-tertiary);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .file-name {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .editor-content {
+      padding: 18px;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      line-height: 1.6;
+      background: #070a12;
+      color: #e2e8f0;
+      height: 480px;
+      overflow-y: auto;
+    }
+
+    .keyword { color: #f43f5e; font-weight: 600; }
+    .jinja-tag { color: #a855f7; font-weight: 600; }
+    .string { color: #34d399; }
+    .comment { color: #64748b; font-style: italic; }
+    .function { color: #38bdf8; }
+
+    /* SCD Type 2 Timeline Simulator */
+    .simulator-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin-bottom: 32px;
+    }
+
+    .sim-controls {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-action {
+      background: linear-gradient(135deg, var(--walmart-blue), #0284c7);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 113, 220, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    .scd-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 16px;
+    }
+
+    .scd-table th {
+      background: var(--bg-tertiary);
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid var(--card-border);
+      color: var(--text-dim);
+    }
+
+    .scd-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--card-border);
+      font-family: var(--font-mono);
+    }
+
+    .row-active {
+      background: rgba(52, 211, 153, 0.08);
+    }
+
+    .row-closed {
+      background: rgba(148, 163, 184, 0.04);
+      color: var(--text-dim);
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .status-current { background: rgba(52, 211, 153, 0.2); color: #34d399; }
+    .status-expired { background: rgba(244, 63, 94, 0.2); color: #f43f5e; }
+
+    /* Data Dictionary Explorer */
+    .dictionary-search-bar {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 280px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      padding: 8px 14px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-pill.active {
+      background: var(--walmart-blue);
+      color: #fff;
+      border-color: var(--walmart-blue);
+    }
+
+    .dict-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+    }
+
+    .dict-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .dict-card:hover {
+      border-color: var(--card-border-hover);
+      transform: translateY(-2px);
+    }
+
+    .dict-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .dict-table-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .col-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .col-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      padding: 4px 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+
+    .col-type { color: #fbbf24; }
+
+    /* CLI Generator */
+    .cli-generator {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .generator-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .cli-output-box {
+      background: #070a12;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .cli-code {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--accent-cyan);
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      background: var(--walmart-blue);
+      border: none;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover {
+      background: #0284c7;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding: 40px 0;
+      margin-top: 80px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <header>
+    <div class="container nav-bar">
+      <div class="brand">
+        <span class="brand-spark">✳</span>
+        <span>Walmart <span class="brand-tag">Lakehouse Platform</span></span>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
+          <span>🌙</span> <span id="themeLabel">Dark Mode</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-badge">
+        <span>⚡</span> Enterprise dbt & Databricks Architecture
+      </div>
+      <h1 class="hero-title hero-gradient-text">
+        Interactive Architecture & Data Engine
+      </h1>
+      <p class="hero-subtitle">
+        Explore the end-to-end Medallion pipeline: from raw Bronze Delta tables to incremental Silver Tech watermarking, dynamic Jinja One Big Table (OBT), and Gold SCD Type 2 dimension snapshots.
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-pill">
+          <div class="stat-value">6</div>
+          <div class="stat-label">Bronze Sources</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-value">6</div>
+          <div class="stat-label">Silver Tech (Incr)</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Denormalized OBT</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-value">5</div>
+          <div class="stat-label">Gold Ephemeral</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-value">1</div>
+          <div class="stat-label">Gold Fact Table</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-value">5</div>
+          <div class="stat-label">SCD Type 2 Dims</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('explorer', this)">
+        <span>🏗️</span> Architecture Explorer
+      </button>
+      <button class="tab-btn" onclick="switchTab('jinja', this)">
+        <span>🧠</span> Jinja OBT Compiler
+      </button>
+      <button class="tab-btn" onclick="switchTab('scd2', this)">
+        <span>⏳</span> SCD Type 2 Simulator
+      </button>
+      <button class="tab-btn" onclick="switchTab('dictionary', this)">
+        <span>📚</span> Data Dictionary
+      </button>
+      <button class="tab-btn" onclick="switchTab('cli', this)">
+        <span>⚡</span> dbt CLI Generator
+      </button>
+      <button class="tab-btn" onclick="switchTab('security', this)">
+        <span>🔒</span> Security & Setup
+      </button>
+    </div>
+
+    <!-- TAB 1: ARCHITECTURE EXPLORER -->
+    <div id="tab-explorer" class="tab-pane active">
+      <div class="pipeline-grid">
+        <!-- Bronze -->
+        <div class="pipeline-column">
+          <div class="pipeline-col-header">
+            <span class="col-title">📦 Bronze Layer</span>
+            <span class="col-badge badge-bronze">Raw Source</span>
+          </div>
+          <div class="node-card" onclick="inspectNode('bronze_customers')">
+            <div class="node-title"><span>customers</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">Raw customer profiles, emails, phones, and city/province.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('bronze_stores')">
+            <div class="node-title"><span>stores</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">Physical store registry and geographic coordinates.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('bronze_products')">
+            <div class="node-title"><span>products</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">SKU catalog, brand hierarchies, and base unit prices.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('bronze_employees')">
+            <div class="node-title"><span>employees</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">Store-level staffing, roles, and payroll metadata.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('bronze_orders')">
+            <div class="node-title"><span>orders</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">Transaction header, payment methods, order statuses.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('bronze_order_items')">
+            <div class="node-title"><span>order_items</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">Line-item purchase quantities, prices, and line totals.</div>
+          </div>
+        </div>
+
+        <!-- Silver Tech -->
+        <div class="pipeline-column">
+          <div class="pipeline-col-header">
+            <span class="col-title">⚙️ Silver Tech</span>
+            <span class="col-badge badge-silver-tech">Incremental</span>
+          </div>
+          <div class="node-card selected" onclick="inspectNode('customer_tech')">
+            <div class="node-title"><span>customer_tech</span> <span class="node-mat">incremental</span></div>
+            <div class="node-desc">Watermarked deduplication + processed_at lineage marker.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('stores_tech')">
+            <div class="node-title"><span>stores_tech</span> <span class="node-mat">incremental</span></div>
+            <div class="node-desc">Incremental upsert by store_id with updated_timestamp.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('product_tech')">
+            <div class="node-title"><span>product_tech</span> <span class="node-mat">incremental</span></div>
+            <div class="node-desc">SKU incremental ingestion with unique & price > 0 tests.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('employee_tech')">
+            <div class="node-title"><span>employee_tech</span> <span class="node-mat">incremental</span></div>
+            <div class="node-desc">Incremental employee changes merged on employee_id.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('orders_tech')">
+            <div class="node-title"><span>orders_tech</span> <span class="node-mat">incremental</span></div>
+            <div class="node-desc">State watermarked merge on order_id.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('order_items_tech')">
+            <div class="node-title"><span>order_items_tech</span> <span class="node-mat">incremental</span></div>
+            <div class="node-desc">Incremental line items merged on order_item_id.</div>
+          </div>
+        </div>
+
+        <!-- Silver Business -->
+        <div class="pipeline-column">
+          <div class="pipeline-col-header">
+            <span class="col-title">🏢 Silver Business</span>
+            <span class="col-badge badge-silver-bus">Denormalized</span>
+          </div>
+          <div class="node-card" style="border-color: var(--accent-cyan);" onclick="inspectNode('obt')">
+            <div class="node-title"><span>obt (One Big Table)</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">
+              Multi-table dynamic Jinja join connecting orders, customers, stores, products, employees, and line items.
+            </div>
+          </div>
+          <div style="background: rgba(0, 113, 220, 0.08); padding: 12px; border-radius: 8px; font-size: 0.75rem; color: var(--text-muted); margin-top: 12px; border: 1px dashed var(--card-border);">
+            💡 <b>OBT Architecture:</b> Consolidates 6 tables into 1 high-performance analytical substrate, eliminating join penalty for downstream marts.
+          </div>
+        </div>
+
+        <!-- Gold -->
+        <div class="pipeline-column">
+          <div class="pipeline-col-header">
+            <span class="col-title">🏆 Gold Serving</span>
+            <span class="col-badge badge-gold">Marts & Dims</span>
+          </div>
+          <div class="node-card" onclick="inspectNode('fact_orders')">
+            <div class="node-title"><span>fact_orders</span> <span class="node-mat">table</span></div>
+            <div class="node-desc">Order item transactional fact table with sales metrics.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('dim_customer')">
+            <div class="node-title"><span>dim_customer</span> <span class="node-mat">snapshot</span></div>
+            <div class="node-desc">SCD Type 2 historization (dbt_valid_to 9999-12-31).</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('dim_stores')">
+            <div class="node-title"><span>dim_stores</span> <span class="node-mat">snapshot</span></div>
+            <div class="node-desc">SCD Type 2 store dimension snapshot.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('dim_products')">
+            <div class="node-title"><span>dim_products</span> <span class="node-mat">snapshot</span></div>
+            <div class="node-desc">SCD Type 2 product price & attribute changes.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('dim_employee')">
+            <div class="node-title"><span>dim_employee</span> <span class="node-mat">snapshot</span></div>
+            <div class="node-desc">SCD Type 2 employee staffing & compensation track.</div>
+          </div>
+          <div class="node-card" onclick="inspectNode('dim_orders')">
+            <div class="node-title"><span>dim_orders</span> <span class="node-mat">snapshot</span></div>
+            <div class="node-desc">SCD Type 2 order status progression tracker.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Inspector Detail Panel -->
+      <div class="inspector-panel" id="inspectorPanel">
+        <div class="inspector-header">
+          <div>
+            <h2 id="inspTitle" style="font-size: 1.5rem; font-weight: 700; color: var(--accent-cyan);">customer_tech</h2>
+            <div class="inspector-meta" id="inspMeta">
+              <span class="meta-tag">Layer: Silver Tech</span>
+              <span class="meta-tag">Materialization: Incremental</span>
+              <span class="meta-tag">Catalog: walmart.silver_tech</span>
+              <span class="meta-tag">Key: customer_id</span>
+            </div>
+          </div>
+        </div>
+        <p id="inspDescription" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 16px;">
+          Ingests customer data incrementally from bronze.customers. Automatically updates existing customer records and inserts new ones while maintaining a processed_at lineage marker.
+        </p>
+
+        <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Transformation Logic</div>
+        <pre class="code-block" id="inspCode">
+{{
+    config(
+        materialized='incremental',
+        unique_key = 'customer_id'
+    )
+}}
+
+SELECT 
+    *,
+    current_timestamp() as processed_at
+FROM 
+    {{ source('walmart_db', 'customers') }}
+
+{% if is_incremental() %}
+    WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})
+{% endif %}
+        </pre>
+      </div>
+    </div>
+
+    <!-- TAB 2: JINJA OBT COMPILER -->
+    <div id="tab-jinja" class="tab-pane">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">Jinja Meta-Programming Engine in <code style="color: var(--accent-cyan); font-family: var(--font-mono);">obt.sql</code></h2>
+        <p style="color: var(--text-muted);">
+          Instead of hardcoding 140 lines of static JOINs, <code style="color: var(--accent-cyan);">obt.sql</code> defines a declarative configuration array and renders the multi-table query dynamically using Jinja loops.
+        </p>
+      </div>
+
+      <div class="jinja-split-view">
+        <!-- Left: Jinja Source -->
+        <div class="code-editor-card">
+          <div class="editor-top-bar">
+            <span class="file-name">📄 models/silver_b/obt.sql (Jinja Source)</span>
+            <span style="font-size: 0.72rem; color: var(--accent-purple); font-weight: 700;">JINJA CONFIG</span>
+          </div>
+          <div class="editor-content">
+<span class="jinja-tag">{% set</span> configs = [
+  {
+    <span class="string">"table"</span>: <span class="function">ref</span>(<span class="string">'orders_tech'</span>),
+    <span class="string">"alias"</span>: <span class="string">"o"</span>,
+    <span class="string">"columns"</span>: <span class="string">"""
+        o.order_id, o.customer_id, o.store_id,
+        o.total_amount, current_timestamp() AS obt_processed_at
+    """</span>
+  },
+  {
+    <span class="string">"table"</span>: <span class="function">ref</span>(<span class="string">'customer_tech'</span>),
+    <span class="string">"alias"</span>: <span class="string">"c"</span>,
+    <span class="string">"columns"</span>: <span class="string">"""
+        c.first_name AS customer_first_name,
+        c.email AS customer_email, c.city AS customer_city
+    """</span>,
+    <span class="string">"join_condition"</span>: <span class="string">"o.customer_id = c.customer_id"</span>
+  },
+  {
+    <span class="string">"table"</span>: <span class="function">ref</span>(<span class="string">'order_items_tech'</span>),
+    <span class="string">"alias"</span>: <span class="string">"oi"</span>,
+    <span class="string">"columns"</span>: <span class="string">"""
+        oi.order_item_id, oi.product_id,
+        oi.quantity, oi.unit_price, oi.line_amount
+    """</span>,
+    <span class="string">"join_condition"</span>: <span class="string">"o.order_id = oi.order_id"</span>
+  },
+  {
+    <span class="string">"table"</span>: <span class="function">ref</span>(<span class="string">'product_tech'</span>),
+    <span class="string">"alias"</span>: <span class="string">"p"</span>,
+    <span class="string">"columns"</span>: <span class="string">"""
+        p.product_name, p.category, p.brand, p.price
+    """</span>,
+    <span class="string">"join_condition"</span>: <span class="string">"oi.product_id = p.product_id"</span>
+  },
+  {
+    <span class="string">"table"</span>: <span class="function">ref</span>(<span class="string">'employee_tech'</span>),
+    <span class="string">"alias"</span>: <span class="string">"e"</span>,
+    <span class="string">"columns"</span>: <span class="string">"""
+        e.employee_id, e.first_name AS employee_first_name,
+        e.job_title AS employee_job_title
+    """</span>,
+    <span class="string">"join_condition"</span>: <span class="string">"o.store_id = e.store_id"</span>
+  },
+  {
+    <span class="string">"table"</span>: <span class="function">ref</span>(<span class="string">'stores_tech'</span>),
+    <span class="string">"alias"</span>: <span class="string">"s"</span>,
+    <span class="string">"columns"</span>: <span class="string">"""
+        s.store_name, s.city AS store_city
+    """</span>,
+    <span class="string">"join_condition"</span>: <span class="string">"o.store_id = s.store_id"</span>
+  }
+] <span class="jinja-tag">%}</span>
+
+<span class="keyword">SELECT</span> 
+    <span class="jinja-tag">{% for</span> config <span class="keyword">in</span> configs <span class="jinja-tag">%}</span>
+        {{ config[<span class="string">'columns'</span>] }} <span class="jinja-tag">{% if not</span> loop.last <span class="jinja-tag">%}</span>, <span class="jinja-tag">{% endif %}</span>
+    <span class="jinja-tag">{% endfor %}</span>
+<span class="keyword">FROM</span>
+    <span class="jinja-tag">{% for</span> config <span class="keyword">in</span> configs <span class="jinja-tag">%}</span>
+        <span class="jinja-tag">{% if</span> loop.first <span class="jinja-tag">%}</span>
+            {{ config[<span class="string">'table'</span>] }} <span class="keyword">AS</span> {{ config[<span class="string">'alias'</span>] }}
+        <span class="jinja-tag">{% else %}</span>
+        <span class="keyword">LEFT JOIN</span>
+            {{ config[<span class="string">'table'</span>] }} <span class="keyword">AS</span> {{ config[<span class="string">'alias'</span>] }}
+            <span class="keyword">ON</span> {{ config[<span class="string">'join_condition'</span>] }}
+        <span class="jinja-tag">{% endif %}</span>
+    <span class="jinja-tag">{% endfor %}</span>
+          </div>
+        </div>
+
+        <!-- Right: Compiled SQL Output -->
+        <div class="code-editor-card">
+          <div class="editor-top-bar">
+            <span class="file-name">⚡ target/compiled/walmart_db/models/silver_b/obt.sql</span>
+            <span style="font-size: 0.72rem; color: var(--accent-emerald); font-weight: 700;">COMPILED SQL</span>
+          </div>
+          <div class="editor-content">
+<span class="keyword">SELECT</span> 
+    o.order_id,
+    o.customer_id,
+    o.store_id,
+    o.total_amount,
+    current_timestamp() <span class="keyword">AS</span> obt_processed_at,
+    c.first_name <span class="keyword">AS</span> customer_first_name,
+    c.email <span class="keyword">AS</span> customer_email,
+    c.city <span class="keyword">AS</span> customer_city,
+    oi.order_item_id,
+    oi.product_id,
+    oi.quantity,
+    oi.unit_price,
+    oi.line_amount,
+    p.product_name,
+    p.category,
+    p.brand,
+    p.price,
+    e.employee_id,
+    e.first_name <span class="keyword">AS</span> employee_first_name,
+    e.job_title <span class="keyword">AS</span> employee_job_title,
+    s.store_name,
+    s.city <span class="keyword">AS</span> store_city
+<span class="keyword">FROM</span>
+    `walmart`.`silver_tech`.`orders_tech` <span class="keyword">AS</span> o
+<span class="keyword">LEFT JOIN</span>
+    `walmart`.`silver_tech`.`customer_tech` <span class="keyword">AS</span> c
+    <span class="keyword">ON</span> o.customer_id = c.customer_id
+<span class="keyword">LEFT JOIN</span>
+    `walmart`.`silver_tech`.`order_items_tech` <span class="keyword">AS</span> oi
+    <span class="keyword">ON</span> o.order_id = oi.order_id
+<span class="keyword">LEFT JOIN</span>
+    `walmart`.`silver_tech`.`product_tech` <span class="keyword">AS</span> p
+    <span class="keyword">ON</span> oi.product_id = p.product_id
+<span class="keyword">LEFT JOIN</span>
+    `walmart`.`silver_tech`.`employee_tech` <span class="keyword">AS</span> e
+    <span class="keyword">ON</span> o.store_id = e.store_id
+<span class="keyword">LEFT JOIN</span>
+    `walmart`.`silver_tech`.`stores_tech` <span class="keyword">AS</span> s
+    <span class="keyword">ON</span> o.store_id = s.store_id;
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SCD TYPE 2 SIMULATOR -->
+    <div id="tab-scd2" class="tab-pane">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">Interactive SCD Type 2 Timeline Simulator</h2>
+        <p style="color: var(--text-muted);">
+          See how dbt snapshots capture changes over time. Active records stay valid until <code style="color: var(--accent-emerald);">9999-12-31</code>. When an update occurs, the previous record is retired and a new record takes over.
+        </p>
+      </div>
+
+      <div class="simulator-box">
+        <div class="sim-controls">
+          <button class="btn-action" onclick="simulateCustomerRelocation()">
+            <span>📍</span> Simulate Customer Relocation (Update City)
+          </button>
+          <button class="btn-secondary" onclick="simulatePriceChange()">
+            <span>🏷️</span> Simulate Product Price Increase
+          </button>
+          <button class="btn-secondary" onclick="resetSimulator()">
+            <span>🔄</span> Reset to Initial State
+          </button>
+        </div>
+
+        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+          <span>Target Table: <code style="color: var(--accent-cyan);">walmart.gold.dim_customer</code></span>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">Strategy: timestamp (updated_at)</span>
+        </div>
+
+        <table class="scd-table">
+          <thead>
+            <tr>
+              <th>customer_id</th>
+              <th>Name</th>
+              <th>City</th>
+              <th>dbt_valid_from</th>
+              <th>dbt_valid_to</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="scdTableBody">
+            <tr class="row-active">
+              <td>101</td>
+              <td>Sarah Connor</td>
+              <td>Toronto</td>
+              <td>2024-01-01 00:00:00</td>
+              <td style="color: var(--accent-emerald); font-weight: 700;">9999-12-31</td>
+              <td><span class="badge-status status-current">CURRENT</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 24px; padding: 16px; background: rgba(0, 113, 220, 0.08); border-radius: 8px; border: 1px solid rgba(0, 113, 220, 0.2);">
+          <div style="font-weight: 600; font-size: 0.85rem; color: var(--accent-cyan); margin-bottom: 6px;">
+            🔍 Point-in-Time Join Query Syntax (BI & Analytics):
+          </div>
+          <code style="font-family: var(--font-mono); font-size: 0.8rem; color: #e2e8f0; display: block;">
+            SELECT f.order_id, f.total_amount, c.customer_city<br/>
+            FROM walmart.gold.fact_orders f<br/>
+            JOIN walmart.gold.dim_customer c<br/>
+            &nbsp;&nbsp;ON f.customer_id = c.customer_id<br/>
+            &nbsp;AND f.order_timestamp >= c.dbt_valid_from<br/>
+            &nbsp;AND f.order_timestamp &lt; c.dbt_valid_to;
+          </code>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: DATA DICTIONARY -->
+    <div id="tab-dictionary" class="tab-pane">
+      <div class="dictionary-search-bar">
+        <input type="text" id="dictSearch" class="search-input" placeholder="Search columns or tables (e.g., price, customer_id, line_amount)..." onkeyup="filterDictionary()">
+        <div class="filter-pills">
+          <span class="filter-pill active" onclick="setDictFilter('all', this)">All Layers</span>
+          <span class="filter-pill" onclick="setDictFilter('bronze', this)">Bronze</span>
+          <span class="filter-pill" onclick="setDictFilter('silver_tech', this)">Silver Tech</span>
+          <span class="filter-pill" onclick="setDictFilter('silver_b', this)">Silver Business (OBT)</span>
+          <span class="filter-pill" onclick="setDictFilter('gold', this)">Gold Marts</span>
+        </div>
+      </div>
+
+      <div class="dict-grid" id="dictGrid">
+        <!-- Card: customers -->
+        <div class="dict-card" data-layer="bronze" data-table="customers">
+          <div class="dict-card-header">
+            <span class="dict-table-name">customers (Bronze)</span>
+            <span class="col-badge badge-bronze">Source</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Raw customer profile and contact coordinates.</p>
+          <ul class="col-list">
+            <li class="col-item"><span>customer_id (PK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>first_name, last_name</span> <span class="col-type">VARCHAR(100)</span></li>
+            <li class="col-item"><span>email, phone</span> <span class="col-type">VARCHAR(255)</span></li>
+            <li class="col-item"><span>city, province, country</span> <span class="col-type">VARCHAR(100)</span></li>
+            <li class="col-item"><span>created_timestamp, updated_timestamp</span> <span class="col-type">TIMESTAMP</span></li>
+            <li class="col-item"><span>is_active</span> <span class="col-type">CHAR(1)</span></li>
+          </ul>
+        </div>
+
+        <!-- Card: products -->
+        <div class="dict-card" data-layer="bronze" data-table="products">
+          <div class="dict-card-header">
+            <span class="dict-table-name">products (Bronze)</span>
+            <span class="col-badge badge-bronze">Source</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Catalog of all Walmart inventory SKUs.</p>
+          <ul class="col-list">
+            <li class="col-item"><span>product_id (PK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>product_name</span> <span class="col-type">VARCHAR(255)</span></li>
+            <li class="col-item"><span>category, brand</span> <span class="col-type">VARCHAR(100)</span></li>
+            <li class="col-item"><span>price</span> <span class="col-type">NUMERIC(10,2)</span></li>
+            <li class="col-item"><span>created_timestamp, updated_timestamp</span> <span class="col-type">TIMESTAMP</span></li>
+          </ul>
+        </div>
+
+        <!-- Card: orders -->
+        <div class="dict-card" data-layer="bronze" data-table="orders">
+          <div class="dict-card-header">
+            <span class="dict-table-name">orders (Bronze)</span>
+            <span class="col-badge badge-bronze">Source</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Retail point of sale order header records.</p>
+          <ul class="col-list">
+            <li class="col-item"><span>order_id (PK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>customer_id (FK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>store_id (FK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>payment_method, order_status</span> <span class="col-type">VARCHAR(50)</span></li>
+            <li class="col-item"><span>total_amount</span> <span class="col-type">NUMERIC(12,2)</span></li>
+          </ul>
+        </div>
+
+        <!-- Card: order_items -->
+        <div class="dict-card" data-layer="bronze" data-table="order_items">
+          <div class="dict-card-header">
+            <span class="dict-table-name">order_items (Bronze)</span>
+            <span class="col-badge badge-bronze">Source</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Line-item purchases attached to an order.</p>
+          <ul class="col-list">
+            <li class="col-item"><span>order_item_id (PK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>order_id (FK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>product_id (FK)</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>quantity</span> <span class="col-type">INT</span></li>
+            <li class="col-item"><span>unit_price, line_amount</span> <span class="col-type">NUMERIC(12,2)</span></li>
+          </ul>
+        </div>
+
+        <!-- Card: obt -->
+        <div class="dict-card" data-layer="silver_b" data-table="obt">
+          <div class="dict-card-header">
+            <span class="dict-table-name">obt (Silver Business)</span>
+            <span class="col-badge badge-silver-bus">One Big Table</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Consolidated wide table joining all 6 entity layers.</p>
+          <ul class="col-list">
+            <li class="col-item"><span>order_id, order_item_id</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>customer_first_name, customer_email</span> <span class="col-type">VARCHAR</span></li>
+            <li class="col-item"><span>product_name, category, price</span> <span class="col-type">VARCHAR / NUMERIC</span></li>
+            <li class="col-item"><span>employee_first_name, job_title</span> <span class="col-type">VARCHAR</span></li>
+            <li class="col-item"><span>store_name, store_city</span> <span class="col-type">VARCHAR</span></li>
+            <li class="col-item"><span>obt_processed_at</span> <span class="col-type">TIMESTAMP</span></li>
+          </ul>
+        </div>
+
+        <!-- Card: fact_orders -->
+        <div class="dict-card" data-layer="gold" data-table="fact_orders">
+          <div class="dict-card-header">
+            <span class="dict-table-name">fact_orders (Gold)</span>
+            <span class="col-badge badge-gold">Fact Table</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Core transactional fact table at order item grain.</p>
+          <ul class="col-list">
+            <li class="col-item"><span>order_id, order_item_id</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>product_id, store_id, employee_id, customer_id</span> <span class="col-type">BIGINT</span></li>
+            <li class="col-item"><span>quantity</span> <span class="col-type">INT</span></li>
+            <li class="col-item"><span>unit_price, line_amount, total_amount</span> <span class="col-type">NUMERIC</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: CLI COMMAND GENERATOR -->
+    <div id="tab-cli" class="tab-pane">
+      <div class="cli-generator">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">Interactive dbt CLI Command Builder</h2>
+        <p style="color: var(--text-muted); margin-bottom: 24px;">
+          Select your target operation and layers to generate the exact dbt CLI command with copy-paste readiness.
+        </p>
+
+        <div class="generator-grid">
+          <div class="form-group">
+            <label>Action</label>
+            <select id="cliAction" class="form-control" onchange="generateCommand()">
+              <option value="run">dbt run (Execute models)</option>
+              <option value="test">dbt test (Run tests)</option>
+              <option value="snapshot">dbt snapshot (Execute SCD2 snapshots)</option>
+              <option value="build">dbt build (Run + test + snapshot)</option>
+              <option value="compile">dbt compile (Preview SQL)</option>
+              <option value="debug">dbt debug (Test connection)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Model Selector</label>
+            <select id="cliSelector" class="form-control" onchange="generateCommand()">
+              <option value="">-- All Models in Project --</option>
+              <option value="silver_tech">silver_tech (Incremental raw layer)</option>
+              <option value="obt+">obt+ (OBT and all downstream models)</option>
+              <option value="fact_orders">fact_orders (Gold transactional fact)</option>
+              <option value="test_obt">test_obt (Referential test assertion)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Target Environment</label>
+            <select id="cliTarget" class="form-control" onchange="generateCommand()">
+              <option value="dev">dev (Databricks Development Catalog)</option>
+              <option value="prod">prod (Databricks Production Catalog)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Flags</label>
+            <select id="cliFlags" class="form-control" onchange="generateCommand()">
+              <option value="">None</option>
+              <option value="--full-refresh">--full-refresh (Rebuild incrementals)</option>
+              <option value="--fail-fast">--fail-fast (Stop on first failure)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="cli-output-box">
+          <div class="cli-code" id="cliOutput">dbt run --target dev</div>
+          <button class="copy-btn" onclick="copyCliCommand()">
+            <span>📋</span> <span id="copyBtnText">Copy Command</span>
+          </button>
+        </div>
+
+        <div id="cliExplanation" style="margin-top: 14px; font-size: 0.85rem; color: var(--text-muted);">
+          Executes all models in the project targeting the dev warehouse.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: SECURITY & SETUP -->
+    <div id="tab-security" class="tab-pane">
+      <div class="inspector-panel" style="margin-top: 0;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; color: var(--accent-cyan);">Security & Zero-Credential Policy</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">
+          The repository enforces strict multi-layer <code style="color: var(--accent-cyan);">.gitignore</code> barriers to protect your Databricks Personal Access Tokens (PATs) and internal database URIs.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+          <div style="background: var(--bg-tertiary); padding: 18px; border-radius: 8px; border: 1px solid var(--card-border);">
+            <div style="font-weight: 700; color: #f43f5e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <span>🛡️</span> Protected by .gitignore:
+            </div>
+            <ul style="font-size: 0.82rem; color: var(--text-muted); list-style: inside square; line-height: 1.8;">
+              <li><code>walmart_db/profiles.yml</code> (Databricks access tokens)</li>
+              <li><code>Walmart_dataset/.env</code> (PostgreSQL URI & API keys)</li>
+              <li><code>walmart_db/.user.yml</code> (User runtime state)</li>
+              <li><code>target/</code> & <code>dbt_packages/</code> (Compilation artifacts)</li>
+              <li><code>**/logs/</code> & <code>*.log</code> (Execution traces)</li>
+            </ul>
+          </div>
+
+          <div style="background: var(--bg-tertiary); padding: 18px; border-radius: 8px; border: 1px solid var(--card-border);">
+            <div style="font-weight: 700; color: var(--accent-emerald); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <span>✅</span> Recommended Safe Setup:
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">
+              Use the provided sanitized template <code>walmart_db/profiles.sample.yml</code> and supply tokens via environment variables:
+            </p>
+            <pre style="background: #070a12; padding: 10px; border-radius: 6px; font-size: 0.78rem; color: #38bdf8; font-family: var(--font-mono);">
+export DATABRICKS_HOST="dbc-xxxx.cloud.databricks.com"
+export DATABRICKS_HTTP_PATH="/sql/1.0/warehouses/xxxx"
+export DATABRICKS_TOKEN="dapi_your_pat_here"
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      Walmart Enterprise Lakehouse Platform • Powered by dbt Core & Databricks Delta Lake
+    </div>
+  </footer>
+
+  <script>
+    // Tab Switching Logic
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      const targetPane = document.getElementById('tab-' + tabId);
+      if (targetPane) targetPane.classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    // Theme Toggle Logic
+    let isDark = true;
+    function toggleTheme() {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        document.getElementById('themeLabel').innerText = 'Dark Mode';
+        document.getElementById('themeToggleBtn').querySelector('span').innerText = '🌙';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.getElementById('themeLabel').innerText = 'Light Mode';
+        document.getElementById('themeToggleBtn').querySelector('span').innerText = '☀️';
+      }
+    }
+
+    // Node Inspection Data
+    const nodeDetails = {
+      'customer_tech': {
+        title: 'customer_tech',
+        meta: ['Layer: Silver Tech', 'Materialization: Incremental', 'Catalog: walmart.silver_tech', 'Key: customer_id'],
+        desc: 'Ingests customer data incrementally from bronze.customers. Automatically updates existing customer records and inserts new ones while maintaining a processed_at lineage marker.',
+        code: `{{\n    config(\n        materialized='incremental',\n        unique_key = 'customer_id'\n    )\n}}\n\nSELECT \n    *,\n    current_timestamp() as processed_at\nFROM \n    {{ source('walmart_db', 'customers') }}\n\n{% if is_incremental() %}\n    WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})\n{% endif %}`
+      },
+      'stores_tech': {
+        title: 'stores_tech',
+        meta: ['Layer: Silver Tech', 'Materialization: Incremental', 'Catalog: walmart.silver_tech', 'Key: store_id'],
+        desc: 'Physical store directory upserted incrementally with state watermarking on updated_timestamp.',
+        code: `{{\n    config(\n        materialized='incremental',\n        unique_key = 'store_id'\n    )\n}}\n\nSELECT \n    *,\n    current_timestamp() as processed_at\nFROM \n    {{ source('walmart_db', 'stores') }}\n\n{% if is_incremental() %}\n    WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})\n{% endif %}`
+      },
+      'product_tech': {
+        title: 'product_tech',
+        meta: ['Layer: Silver Tech', 'Materialization: Incremental', 'Catalog: walmart.silver_tech', 'Key: product_id'],
+        desc: 'Product SKU catalog incremental table with data tests asserting uniqueness and non-null values for active products.',
+        code: `{{\n    config(\n        materialized='incremental',\n        unique_key = 'product_id'\n    )\n}}\n\nSELECT \n    *,\n    current_timestamp() as processed_at\nFROM \n    {{ source('walmart_db', 'products') }}\n\n{% if is_incremental() %}\n    WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})\n{% endif %}`
+      },
+      'employee_tech': {
+        title: 'employee_tech',
+        meta: ['Layer: Silver Tech', 'Materialization: Incremental', 'Catalog: walmart.silver_tech', 'Key: employee_id'],
+        desc: 'Incremental table capturing employee and cashier records per store.',
+        code: `{{\n    config(\n        materialized='incremental',\n        unique_key = 'employee_id'\n    )\n}}\n\nSELECT \n    *,\n    current_timestamp() as processed_at\nFROM \n    {{ source('walmart_db', 'employees') }}\n\n{% if is_incremental() %}\n    WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})\n{% endif %}`
+      },
+      'orders_tech': {
+        title: 'orders_tech',
+        meta: ['Layer: Silver Tech', 'Materialization: Incremental', 'Catalog: walmart.silver_tech', 'Key: order_id'],
+        desc: 'Point-of-sale order header incremental table with order status and payment methods.',
+        code: `{{\n    config(\n        materialized='incremental',\n        unique_key = 'order_id'\n    )\n}}\n\nSELECT \n    *,\n    current_timestamp() as processed_at\nFROM \n    {{ source('walmart_db', 'orders') }}\n\n{% if is_incremental() %}\n    WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})\n{% endif %}`
+      },
+      'order_items_tech': {
+        title: 'order_items_tech',
+        meta: ['Layer: Silver Tech', 'Materialization: Incremental', 'Catalog: walmart.silver_tech', 'Key: order_item_id'],
+        desc: 'Order item basket contents materialized incrementally by order_item_id.',
+        code: `{{\n    config(\n        materialized='incremental',\n        unique_key = 'order_item_id'\n    )\n}}\n\nSELECT \n    *,\n    current_timestamp() as processed_at\nFROM \n    {{ source('walmart_db', 'order_items') }}\n\n{% if is_incremental() %}\n    WHERE updated_timestamp > (SELECT COALESCE(MAX(updated_timestamp), '1900-01-01') FROM {{ this }})\n{% endif %}`
+      },
+      'obt': {
+        title: 'obt (One Big Table)',
+        meta: ['Layer: Silver Business', 'Materialization: Table', 'Catalog: walmart.silver_b', 'Key: order_item_id'],
+        desc: 'Dynamic Jinja denormalized master table joining orders, customers, items, products, employees, and stores into a wide analytics table.',
+        code: `{% set configs = [\n    {"table": ref('orders_tech'), "alias": "o", "columns": "..."},\n    {"table": ref('customer_tech'), "alias": "c", "join_condition": "o.customer_id = c.customer_id"},\n    {"table": ref('order_items_tech'), "alias": "oi", "join_condition": "o.order_id = oi.order_id"},\n    {"table": ref('product_tech'), "alias": "p", "join_condition": "oi.product_id = p.product_id"},\n    {"table": ref('employee_tech'), "alias": "e", "join_condition": "o.store_id = e.store_id"},\n    {"table": ref('stores_tech'), "alias": "s", "join_condition": "o.store_id = s.store_id"}\n] %}\n\nSELECT ... FROM orders_tech LEFT JOIN ...`
+      },
+      'fact_orders': {
+        title: 'fact_orders',
+        meta: ['Layer: Gold Serving', 'Materialization: Table', 'Catalog: walmart.gold', 'Key: (order_id, order_item_id)'],
+        desc: 'Core transactional fact table at the item grain with total_amount, quantity, unit_price, and line_amount.',
+        code: `SELECT \n    order_id,\n    order_item_id,\n    product_id,\n    store_id,\n    employee_id,\n    customer_id,\n    total_amount,\n    quantity,\n    unit_price,\n    line_amount\nFROM\n    {{ ref('obt') }}`
+      },
+      'dim_customer': {
+        title: 'dim_customer',
+        meta: ['Layer: Gold Serving', 'Materialization: Snapshot (SCD2)', 'Catalog: walmart.gold', 'Key: customer_id'],
+        desc: 'Slowly Changing Dimension Type 2 capturing customer historical profile changes with dbt_valid_to 9999-12-31 for current rows.',
+        code: `snapshots:\n  - name: dim_customer\n    relation: ref('eph_customers')\n    config:\n      schema: gold\n      database: walmart\n      unique_key: customer_id\n      strategy: timestamp\n      updated_at: customer_updated_timestamp\n      dbt_valid_to_current: "to_date('9999-12-31')"`
+      },
+      'dim_stores': {
+        title: 'dim_stores',
+        meta: ['Layer: Gold Serving', 'Materialization: Snapshot (SCD2)', 'Catalog: walmart.gold', 'Key: store_id'],
+        desc: 'SCD Type 2 snapshot tracking store name, city, and status over time.',
+        code: `snapshots:\n  - name: dim_stores\n    relation: ref('eph_stores')\n    config:\n      schema: gold\n      database: walmart\n      unique_key: store_id\n      strategy: timestamp\n      updated_at: store_updated_timestamp\n      dbt_valid_to_current: "to_date('9999-12-31')"`
+      },
+      'dim_products': {
+        title: 'dim_products',
+        meta: ['Layer: Gold Serving', 'Materialization: Snapshot (SCD2)', 'Catalog: walmart.gold', 'Key: product_id'],
+        desc: 'SCD Type 2 snapshot tracking product prices, category, and brand over time.',
+        code: `snapshots:\n  - name: dim_products\n    relation: ref('eph_products')\n    config:\n      schema: gold\n      database: walmart\n      unique_key: product_id\n      strategy: timestamp\n      updated_at: product_updated_timestamp\n      dbt_valid_to_current: "to_date('9999-12-31')"`
+      },
+      'dim_employee': {
+        title: 'dim_employee',
+        meta: ['Layer: Gold Serving', 'Materialization: Snapshot (SCD2)', 'Catalog: walmart.gold', 'Key: employee_id'],
+        desc: 'SCD Type 2 snapshot tracking employee job title, salary, and active status.',
+        code: `snapshots:\n  - name: dim_employee\n    relation: ref('eph_employee')\n    config:\n      schema: gold\n      database: walmart\n      unique_key: employee_id\n      strategy: timestamp\n      updated_at: employee_updated_timestamp\n      dbt_valid_to_current: "to_date('9999-12-31')"`
+      },
+      'dim_orders': {
+        title: 'dim_orders',
+        meta: ['Layer: Gold Serving', 'Materialization: Snapshot (SCD2)', 'Catalog: walmart.gold', 'Key: order_id'],
+        desc: 'SCD Type 2 snapshot tracking order lifecycle statuses from pending to completed.',
+        code: `snapshots:\n  - name: dim_orders\n    relation: ref('eph_orders')\n    config:\n      schema: gold\n      database: walmart\n      unique_key: order_id\n      strategy: timestamp\n      updated_at: order_updated_timestamp\n      dbt_valid_to_current: "to_date('9999-12-31')"`
+      },
+      'bronze_customers': {
+        title: 'customers (Bronze)',
+        meta: ['Layer: Bronze', 'Materialization: External Table', 'Catalog: walmart.bronze', 'Key: customer_id'],
+        desc: 'Raw transactional customer table in Delta lake source.',
+        code: `SELECT * FROM walmart.bronze.customers;`
+      },
+      'bronze_stores': {
+        title: 'stores (Bronze)',
+        meta: ['Layer: Bronze', 'Materialization: External Table', 'Catalog: walmart.bronze', 'Key: store_id'],
+        desc: 'Raw store registry table in Delta lake source.',
+        code: `SELECT * FROM walmart.bronze.stores;`
+      },
+      'bronze_products': {
+        title: 'products (Bronze)',
+        meta: ['Layer: Bronze', 'Materialization: External Table', 'Catalog: walmart.bronze', 'Key: product_id'],
+        desc: 'Raw product master table in Delta lake source.',
+        code: `SELECT * FROM walmart.bronze.products;`
+      },
+      'bronze_employees': {
+        title: 'employees (Bronze)',
+        meta: ['Layer: Bronze', 'Materialization: External Table', 'Catalog: walmart.bronze', 'Key: employee_id'],
+        desc: 'Raw employee staffing table in Delta lake source.',
+        code: `SELECT * FROM walmart.bronze.employees;`
+      },
+      'bronze_orders': {
+        title: 'orders (Bronze)',
+        meta: ['Layer: Bronze', 'Materialization: External Table', 'Catalog: walmart.bronze', 'Key: order_id'],
+        desc: 'Raw retail order header table in Delta lake source.',
+        code: `SELECT * FROM walmart.bronze.orders;`
+      },
+      'bronze_order_items': {
+        title: 'order_items (Bronze)',
+        meta: ['Layer: Bronze', 'Materialization: External Table', 'Catalog: walmart.bronze', 'Key: order_item_id'],
+        desc: 'Raw order item table in Delta lake source.',
+        code: `SELECT * FROM walmart.bronze.order_items;`
+      }
+    };
+
+    function inspectNode(nodeKey) {
+      document.querySelectorAll('.node-card').forEach(c => c.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+
+      const data = nodeDetails[nodeKey];
+      if (!data) return;
+
+      document.getElementById('inspTitle').innerText = data.title;
+      document.getElementById('inspDescription').innerText = data.desc;
+      document.getElementById('inspCode').innerText = data.code;
+      
+      const metaContainer = document.getElementById('inspMeta');
+      metaContainer.innerHTML = '';
+      data.meta.forEach(m => {
+        const span = document.createElement('span');
+        span.className = 'meta-tag';
+        span.innerText = m;
+        metaContainer.appendChild(span);
+      });
+    }
+
+    // SCD Simulator State & Actions
+    let relocationCount = 0;
+    function simulateCustomerRelocation() {
+      relocationCount++;
+      const cities = ['Vancouver', 'Montreal', 'Calgary', 'Ottawa'];
+      const targetCity = cities[(relocationCount - 1) % cities.length];
+      const todayStr = '2024-0' + (relocationCount + 5) + '-15 14:30:00';
+      
+      const tbody = document.getElementById('scdTableBody');
+      const rows = tbody.querySelectorAll('tr');
+      if (rows.length > 0) {
+        const lastRow = rows[rows.length - 1];
+        lastRow.className = 'row-closed';
+        lastRow.cells[4].innerText = todayStr;
+        lastRow.cells[4].style.color = '#94a3b8';
+        lastRow.cells[5].innerHTML = '<span class="badge-status status-expired">EXPIRED</span>';
+      }
+
+      const newRow = document.createElement('tr');
+      newRow.className = 'row-active';
+      newRow.innerHTML = `
+        <td>101</td>
+        <td>Sarah Connor</td>
+        <td><strong>${targetCity}</strong></td>
+        <td>${todayStr}</td>
+        <td style="color: var(--accent-emerald); font-weight: 700;">9999-12-31</td>
+        <td><span class="badge-status status-current">CURRENT</span></td>
+      `;
+      tbody.appendChild(newRow);
+    }
+
+    function simulatePriceChange() {
+      alert("Product snapshot simulation: dim_products strategy behaves identically by tracking updated_timestamp on price changes.");
+    }
+
+    function resetSimulator() {
+      relocationCount = 0;
+      document.getElementById('scdTableBody').innerHTML = `
+        <tr class="row-active">
+          <td>101</td>
+          <td>Sarah Connor</td>
+          <td>Toronto</td>
+          <td>2024-01-01 00:00:00</td>
+          <td style="color: var(--accent-emerald); font-weight: 700;">9999-12-31</td>
+          <td><span class="badge-status status-current">CURRENT</span></td>
+        </tr>
+      `;
+    }
+
+    // Data Dictionary Filter Logic
+    let activeLayerFilter = 'all';
+    function setDictFilter(layer, el) {
+      activeLayerFilter = layer;
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      filterDictionary();
+    }
+
+    function filterDictionary() {
+      const query = document.getElementById('dictSearch').value.toLowerCase();
+      const cards = document.querySelectorAll('.dict-card');
+      
+      cards.forEach(card => {
+        const layer = card.getAttribute('data-layer');
+        const text = card.innerText.toLowerCase();
+        
+        const matchesLayer = (activeLayerFilter === 'all' || layer === activeLayerFilter);
+        const matchesSearch = text.includes(query);
+        
+        card.style.display = (matchesLayer && matchesSearch) ? 'block' : 'none';
+      });
+    }
+
+    // CLI Command Generator Logic
+    function generateCommand() {
+      const action = document.getElementById('cliAction').value;
+      const selector = document.getElementById('cliSelector').value;
+      const target = document.getElementById('cliTarget').value;
+      const flags = document.getElementById('cliFlags').value;
+
+      let cmd = 'dbt ' + action;
+      if (selector) {
+        cmd += ' --select ' + selector;
+      }
+      if (target && target !== 'dev') {
+        cmd += ' --target ' + target;
+      }
+      if (flags) {
+        cmd += ' ' + flags;
+      }
+
+      document.getElementById('cliOutput').innerText = cmd;
+
+      // Explanation
+      let exp = 'Executes ';
+      if (action === 'run') exp += 'models ';
+      else if (action === 'test') exp += 'data tests ';
+      else if (action === 'snapshot') exp += 'SCD Type 2 snapshots ';
+      else if (action === 'build') exp += 'models, snapshots, and tests ';
+      else if (action === 'compile') exp += 'SQL compilation without running ';
+      else if (action === 'debug') exp += 'connection validation ';
+
+      if (selector) exp += `filtered to "${selector}" `;
+      exp += `targeting the ${target} environment.`;
+      document.getElementById('cliExplanation').innerText = exp;
+    }
+
+    function copyCliCommand() {
+      const text = document.getElementById('cliOutput').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btnText = document.getElementById('copyBtnText');
+        btnText.innerText = 'Copied!';
+        setTimeout(() => btnText.innerText = 'Copy Command', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

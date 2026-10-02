@@ -1,0 +1,17 @@
+models:
+    - name: product_tech
+      columns:
+        - name: product_id
+          data_tests:
+            - not_null
+            - unique:
+                config:
+                  where: "price > 0"
+         
+    
+    - name: orders_tech
+      columns:
+        - name: order_id
+          data_tests:
+            - not_null
+            - unique
