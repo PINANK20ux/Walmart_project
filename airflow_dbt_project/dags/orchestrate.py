@@ -1,7 +1,8 @@
-from airflow.sdk import dag , task
+from airflow.sdk import dag, task
 from airflow.operators.bash import BashOperator
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.jobs import RunLifeCycleState, RunResultState
+import os
 import pendulum
 import time
 
@@ -15,12 +16,23 @@ def orchestrate():
 
     @task
     def ingest_cdc():
-        
-        ws = WorkspaceClient(   
-            host="Your_databricks_host",
-            token="Your_databricks_token"
+        host = os.getenv("DATABRICKS_HOST")
+        token = os.getenv("DATABRICKS_TOKEN")
+        job_id_str = os.getenv("DATABRICKS_JOB_ID")
+
+        if not job_id_str:
+            raise ValueError("Environment variable DATABRICKS_JOB_ID is required to trigger CDC ingestion.")
+
+        try:
+            job_id = int(job_id_str)
+        except ValueError:
+            raise ValueError(f"DATABRICKS_JOB_ID must be a numeric integer, got: {job_id_str}")
+
+        ws = WorkspaceClient(
+            host=host,
+            token=token,
         )
-        jobs_trigger = ws.jobs.run_now(job_id="your_job_id")
+        jobs_trigger = ws.jobs.run_now(job_id=job_id)
 
         while True:
             job_run = ws.jobs.get_run(jobs_trigger.run_id)
