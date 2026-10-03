@@ -1,0 +1,16 @@
+# ==============================================================================
+# Airflow Custom Dependencies
+# ==============================================================================
+
+# dbt Core & Databricks Adapter (matches project specification dbt-core v1.8+)
+dbt-core>=1.8.0
+dbt-databricks>=1.8.0
+
+# Airflow Providers
+apache-airflow-providers-databricks
+apache-airflow-providers-postgres
+
+# Database Drivers & Data Processing
+psycopg2-binary>=2.9.9
+pandas>=2.2.0
+pyarrow>=15.0.0

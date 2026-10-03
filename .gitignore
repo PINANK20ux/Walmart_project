@@ -8,13 +8,24 @@
 # Databricks & dbt credentials (NEVER commit tokens or credentials)
 profiles.yml
 **/profiles.yml
-walmart_db/profiles.yml
+airflow_dbt_project/walmart_db/profiles.yml
 
-# Environment variable files containing DB passwords & API keys
+# Whitelist profile sample templates
+!profiles.sample.yml
+!**/profiles.sample.yml
+
+# Environment variable files containing DB passwords, API keys, & Airflow secrets
 .env
 .env.*
 *.env
 Walmart_dataset/.env
+airflow_dbt_project/.env
+
+# Whitelist environment templates
+!.env.example
+!**/.env.example
+!.env.sample
+!**/.env.sample
 
 # Sensitive certificates, keys, and tokens
 *.pem
@@ -28,7 +39,27 @@ id_rsa
 id_ed25519
 
 # ------------------------------------------------------------------------------
-# 2. dbt Build Artifacts, Packages & Execution Logs
+# 2. Apache Airflow Execution State & Configs
+# ------------------------------------------------------------------------------
+# Airflow configuration and local database state
+airflow.cfg
+**/airflow.cfg
+airflow.db
+**/airflow.db
+*.pid
+standalone_admin_password.txt
+webserver_config.py
+
+# ------------------------------------------------------------------------------
+# 3. Docker & Local Service Overrides
+# ------------------------------------------------------------------------------
+.docker/
+docker-compose.override.yml
+*.override.yaml
+*.override.yml
+
+# ------------------------------------------------------------------------------
+# 4. dbt Build Artifacts, Packages & Execution Logs
 # ------------------------------------------------------------------------------
 # Compiled models, target directory, catalog, and manifests
 target/
@@ -49,7 +80,7 @@ dbt.log
 **/.user.yml
 
 # ------------------------------------------------------------------------------
-# 3. Python & Virtual Environments
+# 5. Python & Virtual Environments
 # ------------------------------------------------------------------------------
 __pycache__/
 **/__pycache__/
@@ -71,7 +102,16 @@ htmlcov/
 .ruff_cache/
 
 # ------------------------------------------------------------------------------
-# 4. Operating System & Editor Metadata
+# 6. Database / Local Dumps / Large Intermediate Datasets
+# ------------------------------------------------------------------------------
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+
+# ------------------------------------------------------------------------------
+# 7. Operating System & Editor Metadata
 # ------------------------------------------------------------------------------
 # macOS
 .DS_Store
